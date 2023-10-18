@@ -21,7 +21,9 @@ def plot_3d_surface(x, f, f_obj):
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": "3d"})
     # ax = Axes3D(fig)
 
-    x1 = np.arange(-20, 20, 0.25)
+    xmin = np.floor(-np.max(np.abs(x[0, :])) - 1)
+    xmax = np.ceil(np.max(np.abs(x[0, :])) + 1)
+    x1 = np.arange( xmin, xmax, 0.25 )
     x2 = np.copy(x1)
     x1, x2 = np.meshgrid(x1, x2)
         
@@ -64,7 +66,11 @@ def plot_2d_contour(x, f_obj):
     
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
 
-    x1 = np.arange(-20, 20, 0.25)
+    x = np.array(x)
+    
+    xmin = np.floor(-np.max(np.abs(x[0, :])) - 1)
+    xmax = np.ceil(np.max(np.abs(x[0, :])) + 1)
+    x1 = np.arange( xmin, xmax, 0.25 )
     x2 = np.copy(x1)
     x1, x2 = np.meshgrid(x1, x2)
     
