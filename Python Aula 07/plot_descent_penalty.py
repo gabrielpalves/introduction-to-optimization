@@ -18,8 +18,18 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
         
     """
     
-    x = np.array(x)
-    f = np.array(f)
+    if isinstance(x, list):
+        x = np.array(x)
+    
+    if len(x.shape) == 3:
+        x = x[0, :, :]
+
+    if isinstance(f, list):
+        f = np.array(f)
+        
+    if len(f.shape) == 2:
+        f = f[0, :]
+    
     print(f.shape, x.shape)
     
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": "3d"})
@@ -27,15 +37,15 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
 
     x1 = np.arange(-20, 20, 0.25)
     x2 = np.copy(x1)
-    x1, x2 = np.meshgrid(x1, x2)
+    X1, X2 = np.meshgrid(x1, x2)
         
-    y = np.zeros((x1.shape))
-    for i in range(x1.shape[0]):
-        for j in range(x2.shape[0]):
-            f_grid = f_obj([x1[i,j], x2[i,j]])
+    y = np.zeros((X1.shape))
+    for i in range(X1.shape[0]):
+        for j in range(X2.shape[0]):
+            f_grid = f_obj([X1[i,j], X2[i,j]])
             y[i,j] = f_grid[0]
 
-    surface = ax.plot_surface(x1, x2, y,
+    surface = ax.plot_surface(X1, X2, y,
                           cmap=cm.coolwarm,
                           rstride=1, cstride=1, alpha=0.6)
     
@@ -55,33 +65,44 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
     ax.plot([x[-1, 0]], [x[-1, 1]], [f[-1]] , markerfacecolor='g', markeredgecolor='g', marker='X', markersize=12)
     
     # Plot equality constraints
-    if plot_h:
-        y_h = np.zeros((x1.shape))
+    # OU EU USO SYMBOLIC PARA RESOLVER RESTRIÇÕES DE SEGUNDO GRAU OU MAIS (VER CUSTO)
+    # OU SÓ PROGRAMO PARA RESTRIÇÕES DE PRIMEIRO GRAU
+    # TAMBÉM DA PARA PLOTAR UM HIPERPLANO OU A INTERSEÇÃO NA FUNÇÃO OBJETIVO
+    if plot_h and f_constraints([X1[0,0], X2[0,0]])[0].size > 0:
         for i in range(x1.shape[0]):
-            for j in range(x2.shape[0]):
-                f_grid = f_constraints([x1[i,j], x2[i,j]])
-                y_h[i,j] = f_grid[0]
-        
-        surface = ax.plot_surface(x1, x2, y_h,
-                          cmap=cm.PiYG,
-                          rstride=1, cstride=1, alpha=0.6)
-        
-        fig.colorbar(surface, shrink=0.5, aspect=5)
+            f_grid = f_constraints([x1[i], 0])
+            x2 = -f_grid[0] # get the value of x2
+            f_obj([x1[i]])
     
-    if plot_g:
-        y_g = np.zeros((x1.shape))
-        for i in range(x1.shape[0]):
-            for j in range(x2.shape[0]):
-                f_grid = f_constraints([x1[i,j], x2[i,j]])
-                y_g[i,j] = f_grid[2]
+    # Plot inequality constraints
+    
+    
+    # if plot_h and f_constraints([X1[0,0], X2[0,0]])[0].size > 0:
+    #     y_h = np.zeros((X1.shape))
+    #     for i in range(X1.shape[0]):
+    #         for j in range(X2.shape[0]):
+    #             f_grid = f_constraints([X1[i,j], X2[i,j]])
+    #             y_h[i,j] = f_grid[0]
         
-        surface = ax.plot_surface(x1, x2, y_h,
-                          cmap=cm.BrBG,
-                          rstride=1, cstride=1, alpha=0.6)
+    #     surface = ax.plot_surface(X1, X2, y_h,
+    #                       cmap=cm.PiYG,
+    #                       rstride=1, cstride=1, alpha=0.6)
         
-        fig.colorbar(surface, shrink=0.5, aspect=5)
-
-
+    #     fig.colorbar(surface, shrink=0.5, aspect=5)
+    
+    # if plot_g and f_constraints([X1[0,0], X2[0,0]])[2].size > 0:
+    #     y_g = np.zeros((X1.shape))
+    #     for i in range(X1.shape[0]):
+    #         for j in range(X2.shape[0]):
+    #             f_grid = f_constraints([X1[i,j], X2[i,j]])
+    #             y_g[i,j] = f_grid[2]
+        
+    #     surface = ax.plot_surface(X1, X2, y_h,
+    #                       cmap=cm.BrBG,
+    #                       rstride=1, cstride=1, alpha=0.6)
+        
+    #     fig.colorbar(surface, shrink=0.5, aspect=5)
+    
     plt.show()
 
 
@@ -93,6 +114,12 @@ def plot_2d_contour(x, f_obj):
         x (list): contains a list of points
         f_obj (method): objective function
     """
+    
+    if isinstance(x, list):
+        x = np.array(x)
+    
+    if len(x.shape) == 3:
+        x = x[0, :, :]
     
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
 
