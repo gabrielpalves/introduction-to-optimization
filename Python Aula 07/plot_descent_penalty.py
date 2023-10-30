@@ -4,6 +4,28 @@ import numpy as np
 from matplotlib import cm
 import sympy as sym
 
+def styles_of_line():
+    linestyle_tuple = [
+        ('long dash with offset', (5, (10, 3))),
+        ('loosely dashed',        (0, (5, 10))),
+        #  ('dashed',                (0, (5, 5))),
+        #  ('densely dashed',        (0, (5, 1))),
+
+        #  ('loosely dashdotted',    (0, (3, 10, 1, 10))),
+        ('dashdotted',            (0, (3, 5, 1, 5))),
+        #  ('densely dashdotted',    (0, (3, 1, 1, 1))),
+
+        ('dashdotdotted',         (0, (3, 5, 1, 5, 1, 5))),
+        #  ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
+        #  ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1))),
+        
+        ('loosely dotted',        (0, (1, 10))),
+        ('dotted',                (0, (1, 1))),
+        #  ('densely dotted',        (0, (1, 1))),
+        ]
+    
+    return linestyle_tuple
+
 
 def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
     """
@@ -68,6 +90,7 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
     ax.plot([x[-1, 0]], [x[-1, 1]], [f[-1]] , markerfacecolor='g', markeredgecolor='g', marker='X', markersize=12)
     
     def plot_constraints(equality=True):
+        linestyle_tuple = styles_of_line()
         f_grid = f_constraints(np.array([0, 0]))
         
         if equality:
@@ -111,7 +134,7 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
             xx2 = xx2[idx]
             yy = yy[idx]
             
-            h, = ax.plot(xx1, xx2, yy, color=cor, label=label+str(constraint+1))
+            h, = ax.plot(xx1, xx2, yy, linestyle=linestyle_tuple[constraint][1], color=cor, label=label+str(constraint+1))
             ax.legend(handles=[h])
 
     # Plot equality constraints
@@ -173,6 +196,7 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
     ax.set_title('Cost function')
     
     def plot_constraints(equality=True):
+        linestyle_tuple = styles_of_line()
         f_grid = f_constraints(np.array([0, 0]))
         
         if equality:
@@ -216,7 +240,7 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
             xx2 = xx2[idx]
             yy = yy[idx]
             
-            h, = ax.plot(xx1, xx2, color=cor, label=label+str(constraint+1))
+            h, = ax.plot(xx1, xx2, linestyle=linestyle_tuple[constraint][1], color=cor, label=label+str(constraint+1))
             ax.legend(handles=[h])
             
     # Plot equality constraints
