@@ -184,10 +184,8 @@ print(cost_g)
 print('Number of iterations of the SLP method:')
 print(k)
 
-
+#%% Plots
 N = itmax # number of points to plot
-
-#print(f_obj)
 
 plot_2d_contour(points[:N], f_obj, plot_h=True, plot_g=True, f_constraints=nlconstraints)
 plot_3d_surface(points[:N], values[:N], f_obj, plot_h=True, plot_g=True, f_constraints=nlconstraints)

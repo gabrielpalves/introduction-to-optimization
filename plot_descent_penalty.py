@@ -201,7 +201,7 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
                 yy = np.hstack([yy, yy_temp]) if yy.size else yy_temp
             
             for row in range(xx1.shape[0]):
-                h, = ax.plot(xx1[row, :], xx2[row, :], yy[row, :], linestyle=linestyle_tuple[constraint][1], color=cor, label=label+str(constraint+1))
+                h, = ax.plot(xx1[row, :], xx2[row, :], yy[row, :], linewidth=2, linestyle=linestyle_tuple[constraint][1], color=cor, label=label+str(constraint+1))
             handles.append(h)
         ax.legend(handles=handles)
 
@@ -378,7 +378,7 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
             # yy = np.ravel(yy)
             
             for row in range(xx1.shape[0]):
-                h, = ax.plot(xx1[row, :], xx2[row, :], linestyle=linestyle_tuple[constraint][1], color=cor, label=label+str(constraint+1))
+                h, = ax.plot(xx1[row, :], xx2[row, :], linewidth=2, linestyle=linestyle_tuple[constraint][1], color=cor, label=label+str(constraint+1))
             handles.append(h)
         ax.legend(handles=handles)
             
