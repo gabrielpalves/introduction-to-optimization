@@ -59,8 +59,8 @@ def phi_augmented_Lagrangian(alpha, args):
 def augmented_Lagrangian(x):
     global r, lambda_eq, lambda_ineq
     
-    h, _, g, _ = nlconstraints(np.array(x))
-    f, _ = f_obj(np.array(x))
+    h, dh, g, dg = nlconstraints(np.array(x))
+    f, df = f_obj(np.array(x))
     
     ghat = np.copy(g)
     for i in range(g.size):
@@ -70,7 +70,7 @@ def augmented_Lagrangian(x):
 
     # maxg = np.max(0, ghat)
     L = f + np.dot(lambda_eq, h) + np.dot(lambda_ineq, ghat) + r/2 * (np.dot(h, h) + np.dot(ghat, ghat))
-    dL = 1 # IMPLEMENTAR
+    dL = df + np.dot(lambda_eq, dh)
     
     return L, dL
 
@@ -85,7 +85,7 @@ def phi(x):
     
     # Construction of the gradient of phi: contribution of the inequality constraints (g_i)
     dgaux = np.array(np.zeros(x.shape))
-    if g.size == 1:  # splip into two situations: with only one constraints, and more constraints
+    if g.size == 1:  # split into two situations: with only one constraints, and more constraints
         dgaux = dg*np.maximum(0, g)
     else:
         for i in range(g.size):
@@ -93,7 +93,7 @@ def phi(x):
         
     # Construction of the gradient of phi: contribution of the equality constraints (h_j)
     dhaux = np.array(np.zeros(x.shape))
-    if h.size == 1:  # slip into two situations: with only one constraints, and more constraints
+    if h.size == 1:  # split into two situations: with only one constraints, and more constraints
         dhaux = dh*h
     else:
         for j in range(h.size):
