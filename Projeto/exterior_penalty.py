@@ -3,9 +3,6 @@ from scipy.optimize import minimize_scalar
 from plot_descent_penalty import plot_2d_contour, plot_3d_surface
 
 
-# scipy.optimize.minimize(method='SLSQP')
-# SQP - achar um quadprod para resolver ∇f Δx + ½ Δx H Δx
-
 # Problem to be solved and variable for computational cost computation
 global problem, r
 problem = 1
@@ -49,38 +46,6 @@ def nlconstraints(x):
         dg = np.array([1/2*x[0], 2*x[1]])
     return h, dh, g, dg
 
-
-def phi_augmented_Lagrangian(alpha, args):
-    x = args[0] + alpha*args[1]
-    L, _ = augmented_Lagrangian(x)
-    return L
-
-
-def augmented_Lagrangian(x):
-    global r, lambda_eq, lambda_ineq
-    
-    h, dh, g, dg = nlconstraints(np.array(x))
-    f, df = f_obj(np.array(x))
-    
-    ghat = np.copy(g)
-    for i in range(g.size):
-        c = -lambda_ineq[i]/r
-        if g[i] < c:
-            ghat[i] = c
-
-    # maxg = np.max(0, ghat)
-    L = f + np.dot(lambda_eq, h) + np.dot(lambda_ineq, ghat) + r/2 * (np.dot(h, h) + np.dot(ghat, ghat))
-    
-    # transform in matrix
-    if dh.size > 0 and len(dh.shape) == 1:
-        dh = np.array([dh])
-        
-    if dg.size > 0 and len(dg.shape) == 1:
-        dg = np.array([dg])
-        
-    dL = df + np.matmul(lambda_eq, dh) + np.matmul(lambda_ineq, dg) + r*(np.matmul(h, dh) + np.matmul(g, dg))
-    
-    return L, dL
 
 # Definition of the penalized function phi
 def phi(x):
@@ -141,8 +106,7 @@ def CG_GS(x, alpha0, TolG):
             d = -df + beta*dtm1
             
         # Step determination: Golden Search (method='golden'), Brent (method='brent') or Bounded (method='bounded')
-        # alpha = minimize_scalar(f_alpha, bounds=(.001, alpha0), args=([x,d]), method='bounded')
-        alpha = minimize_scalar(phi_augmented_Lagrangian, bounds=(.001, alpha0), args=([x, d]), method='bounded')
+        alpha = minimize_scalar(f_alpha, bounds=(.001, alpha0), args=([x,d]), method='bounded')
 
         # Update the current point
         xt = x + alpha.x*d
@@ -153,9 +117,8 @@ def CG_GS(x, alpha0, TolG):
         dtm1 = d
     
         # Evaluate the objective function and gradient at the new point
-        # [f, df] = phi(xt)
-        [f, df] = augmented_Lagrangian(xt)
-        
+        [f, df] = phi(xt)
+                
         fs.append(f)
     
         # Update the design variable and iteration number
@@ -165,14 +128,7 @@ def CG_GS(x, alpha0, TolG):
     return x, f, df, t, xs, fs
 
 
-global lambda_eq, lambda_ineq
-
 k, stop_1, stop_2 = 0, 1.0, 1.0
-
-h, _, g, _ = nlconstraints(np.array([0, 0]))
-
-lambda_eq = np.zeros((h.size))
-lambda_ineq = np.zeros((g.size))
 
 points = []
 values = []
@@ -201,9 +157,6 @@ while k < itmax and stop_1 > epsilon_1 and stop_2 > epsilon_2:
         print('Stopped due to a small change in value of the penalized objective function')
         
     # Update Lagrange multiplier, penalty parameter and starting point
-    h, dh, g, dg = nlconstraints(xt)
-    lambda_eq = lambda_eq + r*h
-    lambda_ineq = lambda_ineq + r*g
     r = r*r_ratio
     x = xt
     k = k + 1
