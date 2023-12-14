@@ -27,14 +27,19 @@ def styles_of_line():
     return linestyle_tuple
 
 
-def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
+def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
     """
     Generates a 3d surface plot, showing the direction of the optimization
     
     Inputs:
         x (list): contains a list of points
         f (list): values of the points
-        f_obj (method): objective function
+        f_obj (dict): with fields that calculate the value of the objective function
+                        and the value of its gradient
+        eq_cons (dict): with fields that calculate the value of the equality function(s)
+                        and the value of its gradient
+        ineq_cons (dict): with fields that calculate the value of the inequality function(s)
+                        and the value of its gradient
         plot_h (boolean): True or False, for plotting the equality constraints
         plot_g (boolean): True or False, for plotting the inequality constraints
     """
@@ -63,8 +68,7 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
     y = np.zeros((X1.shape))
     for i in range(X1.shape[0]):
         for j in range(X2.shape[0]):
-            f_grid = f_obj([X1[i,j], X2[i,j]])
-            y[i,j] = f_grid[0]
+            y[i,j] = f_obj['fun']([X1[i,j], X2[i,j]])
     
     # To use in the constraints plot
     # ymax = np.max(y)
@@ -91,15 +95,14 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
     
     def plot_constraints(equality=True):
         linestyle_tuple = styles_of_line()
-        f_grid = f_constraints(np.array([0, 0]))
         handles = []
         
         if equality:
-            x2 = f_grid[0]
+            x2 = eq_cons['fun'](np.array([0, 0]))
             cor = 'g'
             label = 'Equality constraint '
         else:
-            x2 = f_grid[2]
+            x2 = ineq_cons['fun'](np.array([0, 0]))
             cor = 'y'
             label = 'Inequality constraint '
             
@@ -115,15 +118,13 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
             depends_on_x1, depends_on_x2 = True, True
             
             # test if it is dependent of x1
-            f_grid = f_constraints(np.array([x1s, x1[0]]))
-            
             if equality:
-                x2 = f_grid[0]
+                x2 = eq_cons['fun'](np.array([x1s, x1[0]]))
             else:
-                x2 = f_grid[2]
+                x2 = ineq_cons['fun'](np.array([x1s, x1[0]]))
             
-            if n_constraints > 1:
-                x2 = x2[constraint]
+            # if n_constraints > 1:
+            x2 = x2[constraint]
             
             x2 = sym.solve(x2, x1s)
             
@@ -131,35 +132,55 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
                 depends_on_x1 = False
             
             # test if it is dependent of x2
-            f_grid = f_constraints(np.array([x1[0], x2s]))
-            
             if equality:
-                x2 = f_grid[0]
+                x2 = eq_cons['fun'](np.array([x1[0], x2s]))
             else:
-                x2 = f_grid[2]
+                x2 = ineq_cons['fun'](np.array([x1[0], x2s]))
             
-            if n_constraints > 1:
-                x2 = x2[constraint]
+            # if n_constraints > 1:
+            x2 = x2[constraint]
             
             x2 = sym.solve(x2, x2s)
             
             if len(x2) == 0:
                 depends_on_x2 = False
             
-            for i in range(x1.shape[0]):
+            # now test to see the maximum number of roots
+            max_roots = 1
+            for i in range(3):
                 if not depends_on_x2:
-                    f_grid = f_constraints(np.array([x2s, 0]))
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([x2s, np.random.rand()]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([x2s, np.random.rand()]))
                 else:
-                    f_grid = f_constraints(np.array([x1[i], x2s]))
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([np.random.rand(), x2s]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([np.random.rand(), x2s]))
                 
+                x2 = x2[constraint]
+                x2 = sym.solve(x2, x2s)
+                
+                if len(x2) > max_roots:
+                    max_roots = len(x2)
+                
+            # prepare data and plot
+            for i in range(x1.shape[0]):
                 # get the value of x2
-                if equality:
-                    x2 = f_grid[0]
+                if not depends_on_x2:
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([x2s, 0]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([x2s, 0]))
                 else:
-                    x2 = f_grid[2]
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([x1[i], x2s]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([x1[i], x2s]))
                 
-                if n_constraints > 1:
-                    x2 = x2[constraint]
+                # if n_constraints > 1:
+                x2 = x2[constraint]
                 
                 # for all results of x2, associate x1 and y values
                 x2 = sym.solve(x2, x2s)
@@ -172,13 +193,13 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
                     x2_value = float(x2[j])
                     
                     if not depends_on_x2:
-                        yy_temp = np.append(yy_temp, f_obj([x2_value, x1[i]])[0])
+                        yy_temp = np.append(yy_temp, f_obj['fun']([x2_value, x1[i]]))
                         x2_temp = np.append(x2_temp, x1[i])
                         x1_temp = np.append(x1_temp, x2_value)
                     else:
                         x1_temp = np.append(x1_temp, x1[i])
                         x2_temp = np.append(x2_temp, x2_value)
-                        yy_temp = np.append(yy_temp, f_obj([x1[i], x2_value])[0])
+                        yy_temp = np.append(yy_temp, f_obj['fun']([x1[i], x2_value])[0])
                 
                 if not x2[j].is_real:
                     continue
@@ -196,6 +217,12 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
                 x2_temp = np.array([x2_temp]).T
                 yy_temp = np.array([yy_temp]).T
                 
+                # adjust variables shape
+                for _ in range(max_roots - x1_temp.shape[0]):
+                    x1_temp = np.vstack([x1_temp, x1_temp[0]])
+                    x2_temp = np.vstack([x2_temp, x2_temp[0]])
+                    yy_temp = np.vstack([yy_temp, yy_temp[0]])
+                
                 xx1 = np.hstack([xx1, x1_temp]) if xx1.size else x1_temp
                 xx2 = np.hstack([xx2, x2_temp]) if xx2.size else x2_temp
                 yy = np.hstack([yy, yy_temp]) if yy.size else yy_temp
@@ -206,11 +233,11 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
         ax.legend(handles=handles)
 
     # Plot equality constraints
-    if plot_h and f_constraints([X1[0,0], X2[0,0]])[0].size > 0:
+    if plot_h and eq_cons['fun']([X1[0,0], X2[0,0]]).size > 0:
         plot_constraints(equality=True)
     
     # Plot inequality constraints
-    if plot_g and f_constraints([X1[0,0], X2[0,0]])[2].size > 0:
+    if plot_g and ineq_cons['fun']([X1[0,0], X2[0,0]]).size > 0:
         plot_constraints(equality=False)
     
     ax.set_xlim((xmin, xmax))
@@ -219,13 +246,20 @@ def plot_3d_surface(x, f, f_obj, plot_h, plot_g, f_constraints):
     plt.show()
 
 
-def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
+def plot_2d_contour(x, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
     """
     Generates a contour plot, showing the direction of the optimization
     
     Inputs:
         x (list): contains a list of points
-        f_obj (method): objective function
+        f_obj (dict): with fields that calculate the value of the objective function
+                        and the value of its gradient
+        eq_cons (dict): with fields that calculate the value of the equality function(s)
+                        and the value of its gradient
+        ineq_cons (dict): with fields that calculate the value of the inequality function(s)
+                        and the value of its gradient
+        plot_h (boolean): True or False, for plotting the equality constraints
+        plot_g (boolean): True or False, for plotting the inequality constraints
     """
     
     if isinstance(x, list):
@@ -235,7 +269,7 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
         x = x[0, :, :]
     
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
-
+    
     xmin = np.floor(-np.max(np.abs(x[0, :])) - 2)
     xmax = np.ceil(np.max(np.abs(x[0, :])) + 2)
     x1 = np.arange( xmin, xmax, 0.25 )
@@ -245,8 +279,7 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
     y = np.zeros((X1.shape))
     for i in range(X1.shape[0]):
         for j in range(X2.shape[0]):
-            f_grid = f_obj([X1[i,j], X2[i,j]])
-            y[i,j] = f_grid[0]
+            y[i,j] = f_obj['fun']([X1[i,j], X2[i,j]])
 
     contours = ax.contour(X1, X2, y, 30)
     ax.clabel(contours)
@@ -265,15 +298,14 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
     
     def plot_constraints(equality=True):
         linestyle_tuple = styles_of_line()
-        f_grid = f_constraints(np.array([0, 0]))
         handles = []
         
         if equality:
-            x2 = f_grid[0]
+            x2 = eq_cons['fun'](np.array([0, 0]))
             cor = 'c'
             label = 'Equality constraint '
         else:
-            x2 = f_grid[2]
+            x2 = ineq_cons['fun'](np.array([0, 0]))
             cor = 'm'
             label = 'Inequality constraint '
             
@@ -288,15 +320,13 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
             depends_on_x1, depends_on_x2 = True, True
             
             # test if it is dependent of x1
-            f_grid = f_constraints(np.array([x1s, x1[0]]))
-            
             if equality:
-                x2 = f_grid[0]
+                x2 = eq_cons['fun'](np.array([x1s, x1[0]]))
             else:
-                x2 = f_grid[2]
+                x2 = ineq_cons['fun'](np.array([x1s, x1[0]]))
             
-            if n_constraints > 1:
-                x2 = x2[constraint]
+            # if n_constraints > 1:
+            x2 = x2[constraint]
             
             x2 = sym.solve(x2, x1s)
             
@@ -304,35 +334,55 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
                 depends_on_x1 = False
             
             # test if it is dependent of x2
-            f_grid = f_constraints(np.array([x1[0], x2s]))
-            
             if equality:
-                x2 = f_grid[0]
+                x2 = eq_cons['fun'](np.array([x1[0], x2s]))
             else:
-                x2 = f_grid[2]
+                x2 = ineq_cons['fun'](np.array([x1[0], x2s]))
             
-            if n_constraints > 1:
-                x2 = x2[constraint]
+            # if n_constraints > 1:
+            x2 = x2[constraint]
             
             x2 = sym.solve(x2, x2s)
             
             if len(x2) == 0:
                 depends_on_x2 = False
             
-            for i in range(x1.shape[0]):
+            # now test to see the maximum number of roots
+            max_roots = 1
+            for i in range(3):
                 if not depends_on_x2:
-                    f_grid = f_constraints(np.array([x2s, 0]))
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([x2s, np.random.rand()]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([x2s, np.random.rand()]))
                 else:
-                    f_grid = f_constraints(np.array([x1[i], x2s]))
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([np.random.rand(), x2s]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([np.random.rand(), x2s]))
                 
+                x2 = x2[constraint]
+                x2 = sym.solve(x2, x2s)
+                
+                if len(x2) > max_roots:
+                    max_roots = len(x2)
+                
+            # prepare data and plot
+            for i in range(x1.shape[0]):
                 # get the value of x2
-                if equality:
-                    x2 = f_grid[0]
+                if not depends_on_x2:
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([x2s, 0]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([x2s, 0]))
                 else:
-                    x2 = f_grid[2]
+                    if equality:
+                        x2 = eq_cons['fun'](np.array([x1[i], x2s]))
+                    else:
+                        x2 = ineq_cons['fun'](np.array([x1[i], x2s]))
                 
-                if n_constraints > 1:
-                    x2 = x2[constraint]
+                # if n_constraints > 1:
+                x2 = x2[constraint]
                 
                 # for all results of x2, associate x1 and y values
                 x2 = sym.solve(x2, x2s)
@@ -345,13 +395,13 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
                     x2_value = float(x2[j])
                     
                     if not depends_on_x2:
-                        yy_temp = np.append(yy_temp, f_obj([x2_value, 0])[0])
+                        yy_temp = np.append(yy_temp, f_obj['fun']([x2_value, 0]))
                         x2_temp = np.append(x2_temp, x1[i])
                         x1_temp = np.append(x1_temp, x2_value)
                     else:
                         x1_temp = np.append(x1_temp, x1[i])
                         x2_temp = np.append(x2_temp, x2_value)
-                        yy_temp = np.append(yy_temp, f_obj([x1[i], x2_value])[0])
+                        yy_temp = np.append(yy_temp, f_obj['fun']([x1[i], x2_value]))
                 
                 if not x2[j].is_real:
                     continue
@@ -369,6 +419,12 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
                 x2_temp = np.array([x2_temp]).T
                 yy_temp = np.array([yy_temp]).T
                 
+                # adjust variables shape
+                for _ in range(max_roots - x1_temp.shape[0]):
+                    x1_temp = np.vstack([x1_temp, x1_temp[0]])
+                    x2_temp = np.vstack([x2_temp, x2_temp[0]])
+                    yy_temp = np.vstack([yy_temp, yy_temp[0]])
+                
                 xx1 = np.hstack([xx1, x1_temp]) if xx1.size else x1_temp
                 xx2 = np.hstack([xx2, x2_temp]) if xx2.size else x2_temp
                 yy = np.hstack([yy, yy_temp]) if yy.size else yy_temp
@@ -383,11 +439,11 @@ def plot_2d_contour(x, f_obj, plot_h, plot_g, f_constraints):
         ax.legend(handles=handles)
             
     # Plot equality constraints
-    if plot_h and f_constraints([X1[0,0], X2[0,0]])[0].size > 0:
+    if plot_h and eq_cons['fun']([X1[0,0], X2[0,0]]).size > 0:
         plot_constraints(equality=True)
     
     # Plot inequality constraints
-    if plot_g and f_constraints([X1[0,0], X2[0,0]])[2].size > 0:
+    if plot_g and ineq_cons['fun']([X1[0,0], X2[0,0]]).size > 0:
         plot_constraints(equality=False)
     
     ax.set_xlim((xmin, xmax))

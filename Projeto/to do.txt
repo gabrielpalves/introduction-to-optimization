@@ -1,5 +1,0 @@
-Método do Lagrangeano aumentado - seção 5.4.1 do livro do Joaquim Martins/Andrew Ning
-https://mdobook.github.io/
-Resolver uns 2 problemas mostrando sua vantagem (pode até usar o exemplo do livro como 1º problema)
-
-SQP - procurar no livro do Arora
