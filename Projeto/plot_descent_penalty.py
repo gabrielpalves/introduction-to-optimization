@@ -28,7 +28,8 @@ def styles_of_line():
     return linestyle_tuple
 
 
-def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
+def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons,
+                    plot_h=True, plot_g=True, high_quality=True):
     """
     Generates a 3d surface plot, showing the direction of the optimization
 
@@ -41,11 +42,12 @@ def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
             equality function(s) and the value of its gradient
         ineq_cons (dict): with fields that calculate the value of the
             inequality function(s) and the value of its gradient
-        plot_h (boolean): True or False,
-            for plotting the equality constraints
-        plot_g (boolean): True or False,
-            for plotting the inequality constraints
+        plot_h (boolean): plot equality constraints or not
+        plot_g (boolean): plot inequality constraints or not
+        high_quality (boolean): higher quality of constraints plot
+            specially of the constraints plot
     """
+    plt.style.use('seaborn-v0_8-notebook')
 
     if isinstance(x, list):
         x = np.array(x)
@@ -59,12 +61,18 @@ def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
     if len(f.shape) == 2:
         f = f[0, :]
 
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": "3d"})
+    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw={"projection": "3d"})
+    ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.w_yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
     # ax = Axes3D(fig)
 
     xmin = np.floor(-np.max(np.abs(x[0, :])) - 2)
     xmax = np.ceil(np.max(np.abs(x[0, :])) + 2)
-    x1 = np.arange(xmin, xmax, 0.25)
+    if high_quality:
+        x1 = np.arange(xmin, xmax, 0.04)
+    else:
+        x1 = np.arange(xmin, xmax, 0.2)
     x2 = np.copy(x1)
     X1, X2 = np.meshgrid(x1, x2)
 
@@ -264,7 +272,8 @@ def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
     plt.show()
 
 
-def plot_2d_contour(x, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
+def plot_2d_contour(x, f_obj, eq_cons, ineq_cons,
+                    plot_h=True, plot_g=True, high_quality=True):
     """
     Generates a contour plot, showing the direction of the optimization
 
@@ -276,10 +285,10 @@ def plot_2d_contour(x, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
             equality function(s) and the value of its gradient
         ineq_cons (dict): with fields that calculate the value of the
             inequality function(s) and the value of its gradient
-        plot_h (boolean): True or False,
-            for plotting the equality constraints
-        plot_g (boolean): True or False,
-            for plotting the inequality constraints
+        plot_h (boolean): plot equality constraints or not
+        plot_g (boolean): plot inequality constraints or not
+        high_quality (boolean): higher quality of plot,
+            specially of the constraints plot
     """
 
     if isinstance(x, list):
@@ -288,11 +297,14 @@ def plot_2d_contour(x, f_obj, eq_cons, ineq_cons, plot_h=True, plot_g=True):
     if len(x.shape) == 3:
         x = x[0, :, :]
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 8))
 
     xmin = np.floor(-np.max(np.abs(x[0, :])) - 2)
     xmax = np.ceil(np.max(np.abs(x[0, :])) + 2)
-    x1 = np.arange(xmin, xmax, 0.25)
+    if high_quality:
+        x1 = np.arange(xmin, xmax, 0.005)
+    else:
+        x1 = np.arange(xmin, xmax, 0.2)
     x2 = np.copy(x1)
     X1, X2 = np.meshgrid(x1, x2)
 
