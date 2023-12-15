@@ -74,17 +74,6 @@ def methods(ext_pen_method, obj_fun, eq_cons, ineq_cons):
                 f, df, h, dh, g, dg = get_values(
                     x, obj_fun, eq_cons, ineq_cons)
 
-                ghat = np.copy(g)
-                for i in range(g.size):
-                    c = -lambda_ineq[i]/mu
-                    if g[i] < c:
-                        ghat[i] = c
-
-                # maxg = np.max(0, ghat)
-                L = f \
-                    + np.dot(lambda_eq, h) + np.dot(lambda_ineq, ghat) \
-                    + mu/2 * (np.dot(h, h) + np.dot(ghat, ghat))
-
                 # transform in matrix
                 if dh.size > 0 and len(dh.shape) == 1:
                     dh = np.array([dh])
@@ -92,9 +81,24 @@ def methods(ext_pen_method, obj_fun, eq_cons, ineq_cons):
                 if dg.size > 0 and len(dg.shape) == 1:
                     dg = np.array([dg])
 
+                ghat = np.copy(g)
+                for i in range(g.size):
+                    c = -lambda_ineq[i]/mu
+                    if g[i] < c:
+                        ghat[i] = c
+                        dg[i, :] = 0
+
+                # maxg = np.max(0, ghat)
+                L = f \
+                    + np.dot(lambda_eq, h) + np.dot(lambda_ineq, ghat) \
+                    + mu/2 * (
+                        np.linalg.norm(h, ord=2)**2 +
+                        np.linalg.norm(ghat, ord=2)**2
+                        )
+
                 dL = df \
                     + np.matmul(lambda_eq, dh) + np.matmul(lambda_ineq, dg) \
-                    + mu*(np.matmul(h, dh) + np.matmul(g, dg))
+                    + mu*(np.matmul(h, dh) + np.matmul(ghat, dg))
 
                 return L, dL
 
