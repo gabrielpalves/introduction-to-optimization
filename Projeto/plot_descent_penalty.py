@@ -29,7 +29,7 @@ def styles_of_line():
 
 
 def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons,
-                    plot_h=True, plot_g=True, high_quality=True):
+                    plot_h=True, plot_g=True, high_quality=False):
     """
     Generates a 3d surface plot, showing the direction of the optimization
 
@@ -273,7 +273,7 @@ def plot_3d_surface(x, f, f_obj, eq_cons, ineq_cons,
 
 
 def plot_2d_contour(x, f_obj, eq_cons, ineq_cons,
-                    plot_h=True, plot_g=True, high_quality=True):
+                    plot_h=True, plot_g=True, high_quality=False):
     """
     Generates a contour plot, showing the direction of the optimization
 
